@@ -47,8 +47,8 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 // ----------------------------------------------------------
 // MQTT SETTINGS
 // ----------------------------------------------------------
-const char *ssid       = "Teddy Bear";
-const char *password   = "ultraman";
+const char *ssid       = "Teddy Bear"; //WiFi name
+const char *password   = "ultraman";   //WiFi Password
 
 const char *mqtt_server = "broker.emqx.io";
 int mqtt_port           = 1883;
@@ -157,30 +157,53 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
 // ----------------------------------------------------------
 void connectWiFi() {
   Serial.println("Connecting WiFi...");
+  display.clearDisplay();
+  display.setCursor(0, 0);
+  display.print("Connecting WiFi");
+  display.display();
+
   WiFi.begin(ssid, password);
 
   while (WiFi.status() != WL_CONNECTED) {
     delay(300);
     Serial.print(".");
+    display.print(".");
+    display.display();
   }
 
+  display.clearDisplay();
+  display.setCursor(0, 0);
+  display.println("WiFi Connected!\n");
+  display.print("IP: ");
+  display.println(WiFi.localIP());
+  display.display();
   Serial.println("\nWiFi OK!");
   wifiOK = true;
+  delay(1000);
 }
 
 void connectMQTT() {
   while (!client.connected()) {
     Serial.print("MQTT...");
+    display.clearDisplay();
+    display.setCursor(0, 0);
+    display.print("Connecting MQTT:\n" + String(mqtt_server));
+    display.display();
     if (client.connect("esp32-benz-client")) {
       Serial.println("Connected");
+      display.println("\n\nMQTT Connected!.");
+      display.display();
       mqttOK = true;
 
       // Subscribe control topics
       client.subscribe("SPU/device1/cmd/relay1");
       client.subscribe("SPU/device1/cmd/relay2");
       Serial.println("Subscribed to relay control topics");
+      delay(1000);
     } else {
       mqttOK = false;
+      display.println("\n\nTry Connnect MQTT!!!.");
+      display.display();
       Serial.print("Fail: ");
       Serial.println(client.state());
       delay(1000);
@@ -218,6 +241,11 @@ void setup() {
   if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
     Serial.println("OLED not found!");
   }
+
+  display.clearDisplay();
+  display.setCursor(0, 0);
+  display.setTextColor(WHITE);
+  display.setTextSize(1);        
 
   connectWiFi();
   client.setServer(mqtt_server, mqtt_port);
@@ -321,5 +349,5 @@ void loop() {
     Serial.println("MQTT Sent");
   }
 
-  delay(1000);
+  delay(100);
 }
